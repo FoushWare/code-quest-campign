@@ -1,0 +1,28 @@
+{
+  "name": "auth-service",
+  "root": "services/auth",
+  "projectType": "application",
+  "targets": {
+    "start": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{"command": "go run ./cmd/main.go"}],
+        "cwd": "services/auth"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{"command": "docker build -t auth:dev ."}],
+        "cwd": "services/auth"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{"command": "go test ./..."}],
+        "cwd": "services/auth"
+      }
+    }
+  }
+}

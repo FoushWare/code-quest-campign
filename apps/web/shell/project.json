@@ -1,0 +1,27 @@
+{
+  "name": "web-shell",
+  "root": "apps/web/shell",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-shell:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/shell",
+        "index": "apps/web/shell/src/index.html",
+        "main": "apps/web/shell/src/main.tsx",
+        "tsConfig": "apps/web/shell/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {}
+    }
+  }
+}
