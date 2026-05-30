@@ -18,6 +18,7 @@ This guide walks through every top-level project in the repository, explains pur
   - `docs/frontend/README.md`
   - `docs/backend/README.md`
   - `docs/database/README.md`
+  - `docs/ci-cd/README.md`
   - `docs/PROJECTS_GUIDE.md` (this file)
 
 ## Category readmes
@@ -31,6 +32,7 @@ This guide walks through every top-level project in the repository, explains pur
 - Frontend: use the Vercel matrix workflow in [.github/workflows/frontend-vercel.yml](../.github/workflows/frontend-vercel.yml) so each host and MFE has its own build-and-deploy path.
 - Backend: keep GitHub Actions for CI and use a free-first runtime strategy described in [docs/backend/README.md](backend/README.md).
 - Database: keep schema changes in [infra/migrations](../infra/migrations) and validate them with the backend workflow and local compose stack.
+- Full walkthrough: see [docs/ci-cd/README.md](ci-cd/README.md).
 
 ---
 
