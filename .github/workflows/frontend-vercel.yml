@@ -1,0 +1,81 @@
+name: Frontend Vercel
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web-shell
+            build_script: build:web-shell
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_SHELL
+          - app: web-website
+            build_script: build:web-website
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE
+          - app: web-admin
+            build_script: build:web-admin
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN
+          - app: web-website-learning-path
+            build_script: build:web-website-learning-path
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LEARNING_PATH
+          - app: web-website-lessons
+            build_script: build:web-website-lessons
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LESSONS
+          - app: web-website-hearts-gems
+            build_script: build:web-website-hearts-gems
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_HEARTS_GEMS
+          - app: web-website-league-social
+            build_script: build:web-website-league-social
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LEAGUE_SOCIAL
+          - app: web-website-profile-settings
+            build_script: build:web-website-profile-settings
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_PROFILE_SETTINGS
+          - app: web-admin-users
+            build_script: build:web-admin-users
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_USERS
+          - app: web-admin-moderation
+            build_script: build:web-admin-moderation
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_MODERATION
+          - app: web-admin-analytics
+            build_script: build:web-admin-analytics
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_ANALYTICS
+          - app: web-admin-content-editor
+            build_script: build:web-admin-content-editor
+            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_CONTENT_EDITOR
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare runtime files
+        run: npm run prepare:web-runtime:dev
+
+      - name: Build app
+        run: npm run ${{ matrix.build_script }}
+
+      - name: Trigger Vercel deploy hook
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets[matrix.deploy_hook_secret] }}
+        run: |
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "Missing Vercel deploy hook secret for ${{ matrix.app }}"
+            exit 1
+          fi
+          curl -fsSL -X POST "$DEPLOY_HOOK_URL"

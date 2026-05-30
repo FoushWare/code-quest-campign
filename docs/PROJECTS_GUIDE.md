@@ -13,7 +13,24 @@ This guide walks through every top-level project in the repository, explains pur
 - Backend (services): `services/*` — Go microservice stubs
 - Shared UI: `packages/shared-ui`
 - Tools: `tools/scripts/*` — runtime generator, cleanup and helpers
-- Docs: `docs/ONBOARDING.md`, `docs/PROJECTS_GUIDE.md` (this file)
+- Docs:
+  - `docs/ONBOARDING.md`
+  - `docs/frontend/README.md`
+  - `docs/backend/README.md`
+  - `docs/database/README.md`
+  - `docs/PROJECTS_GUIDE.md` (this file)
+
+## Category readmes
+
+- Frontend: [docs/frontend/README.md](frontend/README.md)
+- Backend: [docs/backend/README.md](backend/README.md)
+- Database: [docs/database/README.md](database/README.md)
+
+## CI/CD summary
+
+- Frontend: use the Vercel matrix workflow in [.github/workflows/frontend-vercel.yml](../.github/workflows/frontend-vercel.yml) so each host and MFE has its own build-and-deploy path.
+- Backend: keep GitHub Actions for CI and use a free-first runtime strategy described in [docs/backend/README.md](backend/README.md).
+- Database: keep schema changes in [infra/migrations](../infra/migrations) and validate them with the backend workflow and local compose stack.
 
 ---
 
