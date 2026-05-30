@@ -1,0 +1,30 @@
+{
+  "name": "web-website-hearts-gems",
+  "root": "apps/web/website/hearts-gems",
+  "sourceRoot": "apps/web/website/hearts-gems/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-website-hearts-gems:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/website/hearts-gems",
+        "index": "apps/web/website/hearts-gems/src/index.html",
+        "main": "apps/web/website/hearts-gems/src/main.tsx",
+        "tsConfig": "apps/web/website/hearts-gems/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-website-hearts-gems yet.'"
+      }
+    }
+  }
+}

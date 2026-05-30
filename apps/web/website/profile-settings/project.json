@@ -1,0 +1,30 @@
+{
+  "name": "web-website-profile-settings",
+  "root": "apps/web/website/profile-settings",
+  "sourceRoot": "apps/web/website/profile-settings/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-website-profile-settings:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/website/profile-settings",
+        "index": "apps/web/website/profile-settings/src/index.html",
+        "main": "apps/web/website/profile-settings/src/main.tsx",
+        "tsConfig": "apps/web/website/profile-settings/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-website-profile-settings yet.'"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "web-admin-content-editor",
+  "root": "apps/web/admin/content-editor",
+  "sourceRoot": "apps/web/admin/content-editor/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-admin-content-editor:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/admin/content-editor",
+        "index": "apps/web/admin/content-editor/src/index.html",
+        "main": "apps/web/admin/content-editor/src/main.tsx",
+        "tsConfig": "apps/web/admin/content-editor/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-admin-content-editor yet.'"
+      }
+    }
+  }
+}

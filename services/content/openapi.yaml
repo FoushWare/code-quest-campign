@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Code Quest Content Service
+  version: 0.0.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /paths:
+    get:
+      summary: List learning paths
+      responses:
+        '200':
+          description: Path list stub response
+  /lessons/{nodeId}:
+    get:
+      summary: Load a lesson session
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lesson session stub response

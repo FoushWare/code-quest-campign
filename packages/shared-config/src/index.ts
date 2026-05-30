@@ -1,0 +1,1 @@
+export const sharedConfigPackageName = '@code-quest/shared-config';

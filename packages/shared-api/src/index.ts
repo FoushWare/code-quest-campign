@@ -1,0 +1,1 @@
+export const sharedApiPackageName = '@code-quest/shared-api';

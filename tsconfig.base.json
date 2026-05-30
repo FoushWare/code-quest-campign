@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "es2020",
     "module": "esnext",
     "lib": ["es2020", "dom"],
     "jsx": "react-jsx",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "paths": {}
+    "paths": {
+      "@code-quest/shared-ui": ["packages/shared-ui/src/index.ts"],
+      "@code-quest/shared-types": ["packages/shared-types/src/index.ts"],
+      "@code-quest/shared-api": ["packages/shared-api/src/index.ts"],
+      "@code-quest/shared-config": ["packages/shared-config/src/index.ts"],
+      "@code-quest/shared-validation": ["packages/shared-validation/src/index.ts"]
+    }
   }
 }

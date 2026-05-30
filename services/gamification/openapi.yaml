@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Code Quest Gamification Service
+  version: 0.0.0
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /gems/credit:
+    post:
+      summary: Credit gems
+      responses:
+        '200':
+          description: Credit stub response
+  /hearts/refill:
+    post:
+      summary: Refill hearts
+      responses:
+        '200':
+          description: Hearts refill stub response

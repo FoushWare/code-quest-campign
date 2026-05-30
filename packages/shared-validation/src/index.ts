@@ -1,0 +1,1 @@
+export const sharedValidationPackageName = '@code-quest/shared-validation';

@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Code Quest Spaced Repetition Service
+  version: 0.0.0
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /flashcards/due:
+    get:
+      summary: List due flashcards
+      responses:
+        '200':
+          description: Due flashcards stub response

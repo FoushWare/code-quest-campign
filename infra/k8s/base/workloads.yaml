@@ -1,0 +1,283 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: code-quest
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: code-quest-backend-config
+  namespace: code-quest
+data:
+  DATABASE_URL: postgres://codequest:dev_password@postgres.code-quest.svc.cluster.local:5432/codequest?sslmode=disable
+  REDIS_URL: redis://redis.code-quest.svc.cluster.local:6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: code-quest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+        - name: auth
+          image: ghcr.io/code-quest-campaign/auth:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: PORT
+              value: "8081"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: REDIS_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+  namespace: code-quest
+spec:
+  selector:
+    app: auth
+  ports:
+    - port: 80
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content
+  namespace: code-quest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: content
+  template:
+    metadata:
+      labels:
+        app: content
+    spec:
+      containers:
+        - name: content
+          image: ghcr.io/code-quest-campaign/content:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: PORT
+              value: "8082"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: REDIS_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: content
+  namespace: code-quest
+spec:
+  selector:
+    app: content
+  ports:
+    - port: 80
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamification
+  namespace: code-quest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamification
+  template:
+    metadata:
+      labels:
+        app: gamification
+    spec:
+      containers:
+        - name: gamification
+          image: ghcr.io/code-quest-campaign/gamification:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: PORT
+              value: "8083"
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: REDIS_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gamification
+  namespace: code-quest
+spec:
+  selector:
+    app: gamification
+  ports:
+    - port: 80
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaderboard
+  namespace: code-quest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leaderboard
+  template:
+    metadata:
+      labels:
+        app: leaderboard
+    spec:
+      containers:
+        - name: leaderboard
+          image: ghcr.io/code-quest-campaign/leaderboard:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: PORT
+              value: "8084"
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: REDIS_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leaderboard
+  namespace: code-quest
+spec:
+  selector:
+    app: leaderboard
+  ports:
+    - port: 80
+      targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spaced-repetition
+  namespace: code-quest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spaced-repetition
+  template:
+    metadata:
+      labels:
+        app: spaced-repetition
+    spec:
+      containers:
+        - name: spaced-repetition
+          image: ghcr.io/code-quest-campaign/spaced-repetition:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: PORT
+              value: "8085"
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: code-quest-backend-config
+                  key: DATABASE_URL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spaced-repetition
+  namespace: code-quest
+spec:
+  selector:
+    app: spaced-repetition
+  ports:
+    - port: 80
+      targetPort: 8085
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: code-quest-api
+  namespace: code-quest
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.codequest.local
+      http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 80
+          - path: /content
+            pathType: Prefix
+            backend:
+              service:
+                name: content
+                port:
+                  number: 80
+          - path: /gamification
+            pathType: Prefix
+            backend:
+              service:
+                name: gamification
+                port:
+                  number: 80
+          - path: /leaderboard
+            pathType: Prefix
+            backend:
+              service:
+                name: leaderboard
+                port:
+                  number: 80
+          - path: /spaced-repetition
+            pathType: Prefix
+            backend:
+              service:
+                name: spaced-repetition
+                port:
+                  number: 80
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: code-quest-infra-notes
+  namespace: code-quest
+data:
+  note: Backend services are intentionally stubbed and ready for GHCR image promotion.

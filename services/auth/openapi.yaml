@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Code Quest Auth Service
+  version: 0.0.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /auth/register:
+    post:
+      summary: Register a new user
+      responses:
+        '200':
+          description: Registration stub response
+  /auth/login:
+    post:
+      summary: Log in a user
+      responses:
+        '200':
+          description: Login stub response

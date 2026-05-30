@@ -1,0 +1,28 @@
+{
+  "name": "gamification-service",
+  "root": "services/gamification",
+  "projectType": "application",
+  "targets": {
+    "start": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go run ./cmd/main.go" }],
+        "cwd": "services/gamification"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go build -o ../../dist/services/gamification ./cmd/main.go" }],
+        "cwd": "services/gamification"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go test ./..." }],
+        "cwd": "services/gamification"
+      }
+    }
+  }
+}

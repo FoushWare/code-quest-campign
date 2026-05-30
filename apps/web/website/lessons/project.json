@@ -1,0 +1,30 @@
+{
+  "name": "web-website-lessons",
+  "root": "apps/web/website/lessons",
+  "sourceRoot": "apps/web/website/lessons/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-website-lessons:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/website/lessons",
+        "index": "apps/web/website/lessons/src/index.html",
+        "main": "apps/web/website/lessons/src/main.tsx",
+        "tsConfig": "apps/web/website/lessons/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-website-lessons yet.'"
+      }
+    }
+  }
+}

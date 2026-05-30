@@ -1,0 +1,30 @@
+{
+  "name": "web-admin-moderation",
+  "root": "apps/web/admin/moderation",
+  "sourceRoot": "apps/web/admin/moderation/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-admin-moderation:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/admin/moderation",
+        "index": "apps/web/admin/moderation/src/index.html",
+        "main": "apps/web/admin/moderation/src/main.tsx",
+        "tsConfig": "apps/web/admin/moderation/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-admin-moderation yet.'"
+      }
+    }
+  }
+}
