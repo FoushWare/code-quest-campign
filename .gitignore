@@ -6,4 +6,4 @@ dist/
 /.vscode
 coverage/
 dist/
-package-lock.json
+.vercel
