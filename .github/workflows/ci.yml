@@ -26,9 +26,6 @@ jobs:
       - name: Build web apps
         run: npm run ci:frontend
 
-      - name: Build Storybook
-        run: npm run storybook:build
-
   backend:
     name: Backend tests
     runs-on: ubuntu-latest
