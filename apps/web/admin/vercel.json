@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd ../.. && npm run build:web-admin",
+  "outputDirectory": "dist/apps/web-admin",
+  "framework": null,
+  "installCommand": "cd ../.. && npm install",
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

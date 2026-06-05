@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd ../.. && npm run build:web-website",
+  "outputDirectory": "dist/apps/web-website",
+  "framework": null,
+  "installCommand": "cd ../.. && npm install",
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

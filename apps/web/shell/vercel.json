@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build:web-shell",
+  "outputDirectory": "dist/apps/web-shell",
+  "framework": null,
+  "installCommand": "npm install",
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

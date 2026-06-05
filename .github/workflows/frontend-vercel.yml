@@ -15,41 +15,53 @@ jobs:
       matrix:
         include:
           - app: web-shell
+            app_dir: apps/web/shell
             build_script: build:web-shell
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_SHELL
+            project_name: shell
           - app: web-website
+            app_dir: apps/web/website
             build_script: build:web-website
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE
+            project_name: website
           - app: web-admin
+            app_dir: apps/web/admin
             build_script: build:web-admin
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN
+            project_name: admin
           - app: web-website-learning-path
+            app_dir: apps/web/website/learning-path
             build_script: build:web-website-learning-path
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LEARNING_PATH
+            project_name: learning-path
           - app: web-website-lessons
+            app_dir: apps/web/website/lessons
             build_script: build:web-website-lessons
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LESSONS
+            project_name: lessons
           - app: web-website-hearts-gems
+            app_dir: apps/web/website/hearts-gems
             build_script: build:web-website-hearts-gems
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_HEARTS_GEMS
+            project_name: hearts-gems
           - app: web-website-league-social
+            app_dir: apps/web/website/league-social
             build_script: build:web-website-league-social
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_LEAGUE_SOCIAL
+            project_name: league-social
           - app: web-website-profile-settings
+            app_dir: apps/web/website/profile-settings
             build_script: build:web-website-profile-settings
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_WEBSITE_PROFILE_SETTINGS
+            project_name: profile-settings
           - app: web-admin-users
+            app_dir: apps/web/admin/users
             build_script: build:web-admin-users
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_USERS
+            project_name: users
           - app: web-admin-moderation
+            app_dir: apps/web/admin/moderation
             build_script: build:web-admin-moderation
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_MODERATION
+            project_name: moderation
           - app: web-admin-analytics
+            app_dir: apps/web/admin/analytics
             build_script: build:web-admin-analytics
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_ANALYTICS
+            project_name: analytics
           - app: web-admin-content-editor
+            app_dir: apps/web/admin/content-editor
             build_script: build:web-admin-content-editor
-            deploy_hook_secret: VERCEL_DEPLOY_HOOK_WEB_ADMIN_CONTENT_EDITOR
+            project_name: content-editor
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,13 +81,18 @@ jobs:
       - name: Build app
         run: npm run ${{ matrix.build_script }}
 
-      - name: Trigger Vercel deploy hook
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        working-directory: ${{ matrix.app_dir }}
+        run: vercel pull --yes --token=${{ secrets.VERCEL_TOKEN }} --environment=production
+
+      - name: Build Project Artifacts
+        working-directory: ${{ matrix.app_dir }}
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          DEPLOY_HOOK_URL: ${{ secrets[matrix.deploy_hook_secret] }}
-        run: |
-          if [ -z "$DEPLOY_HOOK_URL" ]; then
-            echo "Missing Vercel deploy hook secret for ${{ matrix.app }}"
-            exit 1
-          fi
-          curl -fsSL -X POST "$DEPLOY_HOOK_URL"
+        working-directory: ${{ matrix.app_dir }}
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
