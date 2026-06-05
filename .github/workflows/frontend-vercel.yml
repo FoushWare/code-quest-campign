@@ -88,10 +88,6 @@ jobs:
         working-directory: ${{ matrix.app_dir }}
         run: vercel pull --yes --token=${{ secrets.VERCEL_TOKEN }} --environment=production
 
-      - name: Build Project Artifacts
-        working-directory: ${{ matrix.app_dir }}
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
       - name: Deploy to Vercel
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: ${{ matrix.app_dir }}
