@@ -373,79 +373,102 @@
             const treeDiv = document.getElementById('tree');
             treeDiv.innerHTML = '';
 
-            // Group workflows by team
-            const groups = {
-                'Frontend': [],
-                'Backend CI': [],
-                'Backend Deploy': [],
-                'Other': []
-            };
+            // Group workflows by feature/service
+            const features = {};
 
             workflowsData.forEach(workflow => {
-                const name = workflow.name;
-                let group = 'Other';
+                const name = workflow.name.toLowerCase();
+                let feature = 'Other';
 
-                if (name.startsWith('[Frontend]')) {
-                    group = 'Frontend';
-                } else if (name.startsWith('[Backend CI]')) {
-                    group = 'Backend CI';
-                } else if (name.startsWith('[Backend Deploy]')) {
-                    group = 'Backend Deploy';
+                // Extract feature from workflow name
+                if (name.includes('auth')) {
+                    feature = 'Auth';
+                } else if (name.includes('content')) {
+                    feature = 'Content';
+                } else if (name.includes('gamification')) {
+                    feature = 'Gamification';
+                } else if (name.includes('leaderboard')) {
+                    feature = 'Leaderboard';
+                } else if (name.includes('spaced-repetition') || name.includes('spaced repetition')) {
+                    feature = 'Spaced Repetition';
+                } else if (name.includes('shell')) {
+                    feature = 'Shell';
+                } else if (name.includes('website')) {
+                    feature = 'Website';
+                } else if (name.includes('admin')) {
+                    feature = 'Admin';
+                } else if (name.includes('learning-path')) {
+                    feature = 'Learning Path';
+                } else if (name.includes('lessons')) {
+                    feature = 'Lessons';
+                } else if (name.includes('hearts-gems')) {
+                    feature = 'Hearts & Gems';
+                } else if (name.includes('league-social')) {
+                    feature = 'League Social';
+                } else if (name.includes('profile-settings')) {
+                    feature = 'Profile Settings';
+                } else if (name.includes('users')) {
+                    feature = 'Users';
+                } else if (name.includes('moderation')) {
+                    feature = 'Moderation';
+                } else if (name.includes('analytics')) {
+                    feature = 'Analytics';
+                } else if (name.includes('content-editor')) {
+                    feature = 'Content Editor';
                 }
 
-                groups[group].push(workflow);
+                if (!features[feature]) {
+                    features[feature] = [];
+                }
+                features[feature].push(workflow);
             });
 
-            // Create tree structure
-            const treeData = [
-                {
-                    label: 'Frontend Team',
-                    icon: '🎨',
-                    children: groups['Frontend'].map(w => ({
-                        label: w.name.replace('[Frontend] ', ''),
-                        icon: extractIcon(w.name),
-                        workflow: w,
-                        url: w.html_url
-                    }))
-                },
-                {
-                    label: 'Backend CI Team',
-                    icon: '⚙️',
-                    children: groups['Backend CI'].map(w => ({
-                        label: w.name.replace('[Backend CI] ', ''),
-                        icon: extractIcon(w.name),
-                        workflow: w,
-                        url: w.html_url
-                    }))
-                },
-                {
-                    label: 'Backend Deploy Team',
-                    icon: '🚀',
-                    children: groups['Backend Deploy'].map(w => ({
-                        label: w.name.replace('[Backend Deploy] ', ''),
-                        icon: extractIcon(w.name),
-                        workflow: w,
-                        url: w.html_url
-                    }))
-                }
-            ];
-
-            if (groups['Other'].length > 0) {
-                treeData.push({
-                    label: 'Other Workflows',
-                    icon: '📋',
-                    children: groups['Other'].map(w => ({
-                        label: w.name,
-                        icon: '📄',
-                        workflow: w,
-                        url: w.html_url
-                    }))
-                });
-            }
+            // Create tree structure grouped by feature
+            const treeData = Object.keys(features).map(feature => ({
+                label: feature,
+                icon: getFeatureIcon(feature),
+                children: features[feature].map(w => ({
+                    label: w.name.replace(/\[.*?\]\s*/, '').trim(),
+                    icon: extractIcon(w.name),
+                    workflow: w,
+                    url: w.html_url,
+                    type: getWorkflowType(w.name)
+                }))
+            })).sort((a, b) => a.label.localeCompare(b.label));
 
             treeData.forEach(node => {
                 treeDiv.appendChild(createTreeNode(node, 0));
             });
+        }
+
+        function getFeatureIcon(feature) {
+            const icons = {
+                'Auth': '🔐',
+                'Content': '📝',
+                'Gamification': '🎮',
+                'Leaderboard': '🏅',
+                'Spaced Repetition': '🧠',
+                'Shell': '🎨',
+                'Website': '🌐',
+                'Admin': '📊',
+                'Learning Path': '📚',
+                'Lessons': '�',
+                'Hearts & Gems': '💎',
+                'League Social': '🏆',
+                'Profile Settings': '⚙️',
+                'Users': '👥',
+                'Moderation': '🛡️',
+                'Analytics': '📈',
+                'Content Editor': '✏️',
+                'Other': '📋'
+            };
+            return icons[feature] || '📋';
+        }
+
+        function getWorkflowType(name) {
+            if (name.includes('CI')) return 'CI';
+            if (name.includes('Deploy') || name.includes('Vercel')) return 'Deploy';
+            return 'Other';
         }
 
         function extractIcon(name) {
@@ -481,6 +504,14 @@
             contentDiv.appendChild(label);
 
             if (node.workflow) {
+                const type = node.type || 'Other';
+                const typeSpan = document.createElement('span');
+                typeSpan.className = 'node-status';
+                typeSpan.style.background = type === 'CI' ? '#e7f3ff' : type === 'Deploy' ? '#fff3cd' : '#e2e3e5';
+                typeSpan.style.color = type === 'CI' ? '#0066cc' : type === 'Deploy' ? '#856404' : '#383d41';
+                typeSpan.textContent = type.toUpperCase();
+                contentDiv.appendChild(typeSpan);
+
                 const status = getStatus(node.workflow);
                 const statusSpan = document.createElement('span');
                 statusSpan.className = `node-status status-${status}`;
