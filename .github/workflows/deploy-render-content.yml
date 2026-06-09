@@ -1,0 +1,25 @@
+name: Deploy Render - content
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/content/**'
+      - '.github/workflows/deploy-render-content.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Content Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8k8kkvlk1mc73cl7bs0
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
