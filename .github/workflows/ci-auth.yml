@@ -1,4 +1,4 @@
-name: CI - auth
+name: 🔐 CI - auth
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: CI - gamification
+name: 🎮 CI - gamification
 
 on:
   pull_request:

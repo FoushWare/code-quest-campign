@@ -1,4 +1,4 @@
-name: Frontend Vercel - web-admin-users
+name: 👥 Frontend Vercel - web-admin-users
 
 on:
   pull_request:

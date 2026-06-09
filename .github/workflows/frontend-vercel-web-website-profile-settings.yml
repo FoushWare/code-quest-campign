@@ -1,4 +1,4 @@
-name: Frontend Vercel - web-website-profile-settings
+name: ⚙️ Frontend Vercel - web-website-profile-settings
 
 on:
   pull_request:

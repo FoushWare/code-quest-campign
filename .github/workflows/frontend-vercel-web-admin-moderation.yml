@@ -1,4 +1,4 @@
-name: Frontend Vercel - web-admin-moderation
+name: 🛡️ Frontend Vercel - web-admin-moderation
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: CI - leaderboard
+name: 🏅 CI - leaderboard
 
 on:
   pull_request:
