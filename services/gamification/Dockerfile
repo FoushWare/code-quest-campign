@@ -1,6 +1,7 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /app
-COPY . .
+COPY services/gamification ./services/gamification
+WORKDIR /app/services/gamification
 RUN go build -o /out/service ./cmd/main.go
 
 FROM alpine:3.20

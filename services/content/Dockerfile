@@ -1,6 +1,6 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /app
-COPY . .
+COPY services/content ./services/content
 WORKDIR /app/services/content
 RUN go build -o /out/content ./cmd/main.go
 

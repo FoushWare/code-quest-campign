@@ -1,0 +1,86 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/**'
+      - '.github/workflows/deploy-render.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-auth:
+    name: Deploy Auth Service
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'services/auth') || contains(github.event.commits[0].added, 'services/auth') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8iualojo6nc73do18j0
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
+
+  deploy-content:
+    name: Deploy Content Service
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'services/content') || contains(github.event.commits[0].added, 'services/content') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8k8kkvlk1mc73cl7bs0
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
+
+  deploy-gamification:
+    name: Deploy Gamification Service
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'services/gamification') || contains(github.event.commits[0].added, 'services/gamification') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8k8kkrtqb8s739226vg
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
+
+  deploy-leaderboard:
+    name: Deploy Leaderboard Service
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'services/leaderboard') || contains(github.event.commits[0].added, 'services/leaderboard') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8k8kl1o3t8c73aq5cfg
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
+
+  deploy-spaced-repetition:
+    name: Deploy Spaced Repetition Service
+    runs-on: ubuntu-latest
+    if: contains(github.event.commits[0].modified, 'services/spaced-repetition') || contains(github.event.commits[0].added, 'services/spaced-repetition') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8k8klf7f7vs73c2uidg
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true
