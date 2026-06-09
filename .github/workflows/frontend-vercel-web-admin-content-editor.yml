@@ -1,4 +1,4 @@
-name: ✏️ Frontend Vercel - web-admin-content-editor
+name: [Frontend] ✏️ Vercel - web-admin-content-editor
 
 on:
   pull_request:

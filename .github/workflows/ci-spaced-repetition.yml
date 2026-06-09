@@ -1,4 +1,4 @@
-name: 🧠 CI - spaced-repetition
+name: [Backend CI] 🧠 spaced-repetition
 
 on:
   pull_request:

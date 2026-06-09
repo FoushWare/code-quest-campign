@@ -1,4 +1,4 @@
-name: 📝 CI - content
+name: [Backend CI] 📝 content
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: 🚀 Deploy Render - leaderboard
+name: [Backend Deploy] 🚀 leaderboard
 
 on:
   push:

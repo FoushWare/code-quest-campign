@@ -1,4 +1,4 @@
-name: 🚀 Deploy Render - spaced-repetition
+name: [Backend Deploy] 🚀 spaced-repetition
 
 on:
   push:

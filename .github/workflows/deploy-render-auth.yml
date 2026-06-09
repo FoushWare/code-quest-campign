@@ -1,4 +1,4 @@
-name: 🚀 Deploy Render - auth
+name: [Backend Deploy] 🚀 auth
 
 on:
   push:
