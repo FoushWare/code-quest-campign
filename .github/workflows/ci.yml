@@ -26,21 +26,6 @@ jobs:
       - name: Build web apps
         run: npm run ci:frontend
 
-  backend:
-    name: Backend tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      - name: Run service tests
-        run: npm run ci:backend
-
   docker:
     name: Docker config
     runs-on: ubuntu-latest

@@ -1,0 +1,29 @@
+name: CI - spaced-repetition
+
+on:
+  pull_request:
+    paths:
+      - 'services/spaced-repetition/**'
+      - '.github/workflows/ci-spaced-repetition.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/spaced-repetition/**'
+      - '.github/workflows/ci-spaced-repetition.yml'
+
+jobs:
+  test:
+    name: Spaced Repetition Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run spaced-repetition service tests
+        run: cd services/spaced-repetition && go test ./...
