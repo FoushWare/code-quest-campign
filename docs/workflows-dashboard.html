@@ -278,12 +278,8 @@
                     <input type="text" id="owner" placeholder="GitHub Owner (e.g., FoushWare)" value="FoushWare">
                     <input type="text" id="repo" placeholder="Repository (e.g., code-quest-campign)" value="code-quest-campign">
                 </div>
-                <div class="input-group">
-                    <input type="text" id="token" placeholder="GitHub Personal Access Token" type="password">
-                </div>
                 <div class="input-group" style="margin-top: 15px;">
                     <select id="view-filter" onchange="changeViewFilter()" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
-                        <option value="pr">View by PR</option>
                         <option value="flat">View Flat Workflows</option>
                         <option value="mfe">View by MFE</option>
                         <option value="be">View by Backend Services</option>
@@ -302,19 +298,19 @@
             <div class="stats" id="stats" style="display: none;">
                 <div class="stat-card">
                     <h3 id="total-workflows">0</h3>
-                    <p>Open PRs</p>
+                    <p>Total Workflows</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="frontend-count">0</h3>
-                    <p>Frontend Workflows</p>
+                    <p>Frontend</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="backend-count">0</h3>
-                    <p>Backend Workflows</p>
+                    <p>Backend</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="success-count">0</h3>
-                    <p>Total Workflows</p>
+                    <p>Successful</p>
                 </div>
             </div>
 
@@ -324,14 +320,12 @@
 
     <script>
         let workflowsData = [];
-        let prsData = [];
 
         async function loadWorkflows() {
             // Auto-detect repo from URL
             const urlParams = new URLSearchParams(window.location.search);
             let owner = urlParams.get('owner') || document.getElementById('owner').value;
             let repo = urlParams.get('repo') || document.getElementById('repo').value;
-            const token = document.getElementById('token').value;
             const errorDiv = document.getElementById('error');
             const loadingDiv = document.getElementById('loading');
             const treeDiv = document.getElementById('tree');
@@ -343,49 +337,26 @@
             statsDiv.style.display = 'none';
 
             try {
-                const headers = {};
-                if (token) {
-                    headers['Authorization'] = `token ${token}`;
-                }
-
-                // Fetch PRs first (optional - if fails, continue without PRs)
-                let prsResponse;
-                try {
-                    prsResponse = await fetch(
-                        `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=20`,
-                        { headers: headers }
-                    );
-
-                    if (prsResponse.ok) {
-                        prsData = await prsResponse.json();
-                    } else {
-                        console.warn('Failed to fetch PRs, continuing without PR data');
-                        prsData = [];
-                    }
-                } catch (e) {
-                    console.warn('Error fetching PRs, continuing without PR data:', e);
-                    prsData = [];
-                }
-
-                // Fetch workflows
+                // Fetch workflows without authentication
                 const workflowsResponse = await fetch(
-                    `https://api.github.com/repos/${owner}/${repo}/actions/workflows`,
-                    { headers: headers }
+                    `https://api.github.com/repos/${owner}/${repo}/actions/workflows`
                 );
 
                 if (!workflowsResponse.ok) {
+                    if (workflowsResponse.status === 403 || workflowsResponse.status === 401) {
+                        throw new Error('Repository may be private or rate limited. Try again later or provide authentication.');
+                    }
                     throw new Error(`GitHub API error fetching workflows: ${workflowsResponse.status}`);
                 }
 
                 const data = await workflowsResponse.json();
                 workflowsData = (data.workflows || []).filter(w => !w.name.includes('CI /') && !w.name.includes('GitGuardian'));
 
-                // Get recent runs for each workflow
+                // Get recent runs for each workflow (with rate limiting handling)
                 for (const workflow of workflowsData) {
                     try {
                         const runsResponse = await fetch(
-                            `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow.id}/runs?per_page=5`,
-                            { headers: headers }
+                            `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow.id}/runs?per_page=1`
                         );
                         const runsData = await runsResponse.json();
                         workflow.recentRuns = runsData.workflow_runs || [];
@@ -400,18 +371,6 @@
                 treeDiv.style.display = 'block';
                 statsDiv.style.display = 'grid';
 
-                // Show warning if PR data is not available
-                if (!prsData || prsData.length === 0) {
-                    const warningDiv = document.createElement('div');
-                    warningDiv.style.background = '#fff3cd';
-                    warningDiv.style.color = '#856404';
-                    warningDiv.style.padding = '12px';
-                    warningDiv.style.borderRadius = '6px';
-                    warningDiv.style.marginBottom = '20px';
-                    warningDiv.textContent = '⚠️ PR data not available (authentication required). Showing workflows in flat view.';
-                    treeDiv.insertBefore(warningDiv, treeDiv.firstChild);
-                }
-
             } catch (error) {
                 errorDiv.textContent = error.message;
                 errorDiv.style.display = 'block';
@@ -424,11 +383,9 @@
             const urlParams = new URLSearchParams(window.location.search);
             const owner = urlParams.get('owner');
             const repo = urlParams.get('repo');
-            const savedToken = localStorage.getItem('github-token');
 
             if (owner) document.getElementById('owner').value = owner;
             if (repo) document.getElementById('repo').value = repo;
-            if (savedToken) document.getElementById('token').value = savedToken;
 
             // Auto-load if repo is provided
             if (owner && repo) {
@@ -445,13 +402,6 @@
         function renderTreeByFilter() {
             const filter = document.getElementById('view-filter').value;
 
-            // If PR data is not available and filter is 'pr', default to 'flat'
-            if (filter === 'pr' && (!prsData || prsData.length === 0)) {
-                document.getElementById('view-filter').value = 'flat';
-                renderFlatWorkflows();
-                return;
-            }
-
             switch (filter) {
                 case 'flat':
                     renderFlatWorkflows();
@@ -465,9 +415,8 @@
                 case 'feature':
                     renderByFeature();
                     break;
-                case 'pr':
                 default:
-                    renderTreeByPR();
+                    renderFlatWorkflows();
                     break;
             }
         }
@@ -619,117 +568,6 @@
             });
         }
 
-        function renderTreeByPR() {
-            const treeDiv = document.getElementById('tree');
-            treeDiv.innerHTML = '';
-
-            // Group workflows by PR
-            const prGroups = {};
-
-            // Initialize with all PRs
-            prsData.forEach(pr => {
-                prGroups[pr.number] = {
-                    pr: pr,
-                    features: {}
-                };
-            });
-
-            // Add all workflows to PR groups (even if not triggered)
-            workflowsData.forEach(workflow => {
-                const feature = extractFeatureFromWorkflow(workflow.name);
-                const type = extractTypeFromWorkflow(workflow.name);
-
-                // Add to all PRs
-                Object.keys(prGroups).forEach(prNumber => {
-                    if (!prGroups[prNumber].features[feature]) {
-                        prGroups[prNumber].features[feature] = {
-                            frontend: [],
-                            backend: []
-                        };
-                    }
-
-                    // Find if this workflow was triggered in this PR
-                    const triggeredRun = workflow.recentRuns.find(run => {
-                        const runPRNumber = extractPRNumberFromRun(run);
-                        return runPRNumber === parseInt(prNumber);
-                    });
-
-                    if (type === 'frontend') {
-                        prGroups[prNumber].features[feature].frontend.push({
-                            label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
-                            icon: extractIcon(workflow.name),
-                            workflow: workflow,
-                            url: workflow.html_url,
-                            run: triggeredRun || null
-                        });
-                    } else if (type === 'backend') {
-                        prGroups[prNumber].features[feature].backend.push({
-                            label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
-                            icon: extractIcon(workflow.name),
-                            workflow: workflow,
-                            url: workflow.html_url,
-                            run: triggeredRun || null
-                        });
-                    }
-                });
-            });
-
-            // Create tree structure grouped by PR
-            const treeData = Object.keys(prGroups).map(prNumber => {
-                const group = prGroups[prNumber];
-                const pr = group.pr;
-                const features = group.features;
-
-                const children = [];
-
-                Object.keys(features).forEach(feature => {
-                    const featureData = features[feature];
-                    const featureChildren = [];
-
-                    if (featureData.frontend.length > 0) {
-                        featureChildren.push({
-                            label: 'Frontend',
-                            icon: '🎨',
-                            children: featureData.frontend
-                        });
-                    }
-
-                    if (featureData.backend.length > 0) {
-                        featureChildren.push({
-                            label: 'Backend',
-                            icon: '⚙️',
-                            children: featureData.backend
-                        });
-                    }
-
-                    if (featureChildren.length > 0) {
-                        children.push({
-                            label: feature,
-                            icon: getFeatureIcon(feature),
-                            children: featureChildren
-                        });
-                    }
-                });
-
-                return {
-                    label: `PR #${prNumber}: ${pr.title.substring(0, 50)}${pr.title.length > 50 ? '...' : ''}`,
-                    icon: '🔀',
-                    url: pr.html_url,
-                    children: children.length > 0 ? children : [{ label: 'No workflows', icon: '📋', children: [] }]
-                };
-            }).sort((a, b) => b.label.localeCompare(a.label)); // Sort by PR number descending
-
-            treeData.forEach(node => {
-                treeDiv.appendChild(createTreeNode(node, 0));
-            });
-        }
-
-        function extractPRNumberFromRun(run) {
-            const headBranch = run.head_branch;
-            const prMatch = headBranch?.match(/(\d+)/);
-            return prMatch ? parseInt(prMatch[1]) : null;
-        }
-
         function extractFeatureFromWorkflow(name) {
             const lowerName = name.toLowerCase();
             if (lowerName.includes('auth')) return 'Auth';
@@ -876,38 +714,21 @@
             return 'unknown';
         }
 
-        function isWorkflowTriggeredInPR(workflow, prNumber) {
-            if (!workflow.recentRuns || workflow.recentRuns.length === 0) return false;
-            return workflow.recentRuns.some(run => {
-                const runPRNumber = extractPRNumberFromRun(run);
-                return runPRNumber === prNumber;
-            });
-        }
-
         function updateStats() {
-            const totalPRs = prsData.length;
             const totalWorkflows = workflowsData.length;
             const frontend = workflowsData.filter(w => w.name.includes('Vercel') || w.name.includes('Frontend')).length;
             const backend = workflowsData.filter(w => w.name.includes('CI') || w.name.includes('Deploy')).length;
+            const successful = workflowsData.filter(w => {
+                const run = w.recentRuns[0];
+                if (!run) return false;
+                return run.conclusion === 'success';
+            }).length;
 
-            document.getElementById('total-workflows').textContent = totalPRs;
+            document.getElementById('total-workflows').textContent = totalWorkflows;
             document.getElementById('frontend-count').textContent = frontend;
             document.getElementById('backend-count').textContent = backend;
-            document.getElementById('success-count').textContent = totalWorkflows;
+            document.getElementById('success-count').textContent = successful;
         }
-
-        // Auto-load on page load if token is stored
-        window.onload = () => {
-            const savedToken = localStorage.getItem('github-token');
-            if (savedToken) {
-                document.getElementById('token').value = savedToken;
-            }
-        };
-
-        // Save token when provided
-        document.getElementById('token').addEventListener('change', (e) => {
-            localStorage.setItem('github-token', e.target.value);
-        });
     </script>
 </body>
 </html>
