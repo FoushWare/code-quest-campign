@@ -276,6 +276,15 @@
                 <div class="input-group">
                     <input type="text" id="token" placeholder="GitHub Personal Access Token" type="password">
                 </div>
+                <div class="input-group" style="margin-top: 15px;">
+                    <select id="view-filter" onchange="changeViewFilter()" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;">
+                        <option value="pr">View by PR</option>
+                        <option value="flat">View Flat Workflows</option>
+                        <option value="mfe">View by MFE</option>
+                        <option value="be">View by Backend Services</option>
+                        <option value="feature">View by Feature</option>
+                    </select>
+                </div>
                 <button class="btn" onclick="loadWorkflows()">Load Workflows</button>
                 <div class="error" id="error"></div>
             </div>
@@ -373,7 +382,7 @@
                     }
                 }
 
-                renderTreeByPR();
+                renderTreeByFilter();
                 updateStats();
                 loadingDiv.style.display = 'none';
                 treeDiv.style.display = 'block';
@@ -402,6 +411,182 @@
                 loadWorkflows();
             }
         };
+
+        function changeViewFilter() {
+            if (workflowsData.length > 0) {
+                renderTreeByFilter();
+            }
+        }
+
+        function renderTreeByFilter() {
+            const filter = document.getElementById('view-filter').value;
+
+            switch (filter) {
+                case 'flat':
+                    renderFlatWorkflows();
+                    break;
+                case 'mfe':
+                    renderByMFE();
+                    break;
+                case 'be':
+                    renderByBackendServices();
+                    break;
+                case 'feature':
+                    renderByFeature();
+                    break;
+                case 'pr':
+                default:
+                    renderTreeByPR();
+                    break;
+            }
+        }
+
+        function renderFlatWorkflows() {
+            const treeDiv = document.getElementById('tree');
+            treeDiv.innerHTML = '';
+
+            const treeData = workflowsData.map(workflow => ({
+                label: workflow.name,
+                icon: extractIcon(workflow.name),
+                workflow: workflow,
+                url: workflow.html_url,
+                run: workflow.recentRuns[0] || null
+            })).sort((a, b) => a.label.localeCompare(b.label));
+
+            treeData.forEach(node => {
+                treeDiv.appendChild(createTreeNode(node, 0));
+            });
+        }
+
+        function renderByMFE() {
+            const treeDiv = document.getElementById('tree');
+            treeDiv.innerHTML = '';
+
+            const mfeWorkflows = workflowsData.filter(w => w.name.includes('Vercel') || w.name.includes('Frontend'));
+            const mfeGroups = {};
+
+            mfeWorkflows.forEach(workflow => {
+                const feature = extractFeatureFromWorkflow(workflow.name);
+                if (!mfeGroups[feature]) {
+                    mfeGroups[feature] = [];
+                }
+                mfeGroups[feature].push({
+                    label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                    icon: extractIcon(workflow.name),
+                    workflow: workflow,
+                    url: workflow.html_url,
+                    run: workflow.recentRuns[0] || null
+                });
+            });
+
+            const treeData = Object.keys(mfeGroups).map(feature => ({
+                label: feature,
+                icon: getFeatureIcon(feature),
+                children: mfeGroups[feature]
+            })).sort((a, b) => a.label.localeCompare(b.label));
+
+            treeData.forEach(node => {
+                treeDiv.appendChild(createTreeNode(node, 0));
+            });
+        }
+
+        function renderByBackendServices() {
+            const treeDiv = document.getElementById('tree');
+            treeDiv.innerHTML = '';
+
+            const beWorkflows = workflowsData.filter(w => w.name.includes('CI') || w.name.includes('Deploy'));
+            const beGroups = {};
+
+            beWorkflows.forEach(workflow => {
+                const feature = extractFeatureFromWorkflow(workflow.name);
+                if (!beGroups[feature]) {
+                    beGroups[feature] = {
+                        ci: [],
+                        deploy: []
+                    };
+                }
+
+                if (workflow.name.includes('CI')) {
+                    beGroups[feature].ci.push({
+                        label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                        icon: extractIcon(workflow.name),
+                        workflow: workflow,
+                        url: workflow.html_url,
+                        run: workflow.recentRuns[0] || null
+                    });
+                } else if (workflow.name.includes('Deploy')) {
+                    beGroups[feature].deploy.push({
+                        label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                        icon: extractIcon(workflow.name),
+                        workflow: workflow,
+                        url: workflow.html_url,
+                        run: workflow.recentRuns[0] || null
+                    });
+                }
+            });
+
+            const treeData = Object.keys(beGroups).map(feature => {
+                const group = beGroups[feature];
+                const children = [];
+
+                if (group.ci.length > 0) {
+                    children.push({
+                        label: 'CI',
+                        icon: '🔬',
+                        children: group.ci
+                    });
+                }
+
+                if (group.deploy.length > 0) {
+                    children.push({
+                        label: 'Deploy',
+                        icon: '🚀',
+                        children: group.deploy
+                    });
+                }
+
+                return {
+                    label: feature,
+                    icon: getFeatureIcon(feature),
+                    children: children.length > 0 ? children : [{ label: 'No workflows', icon: '📋', children: [] }]
+                };
+            }).sort((a, b) => a.label.localeCompare(b.label));
+
+            treeData.forEach(node => {
+                treeDiv.appendChild(createTreeNode(node, 0));
+            });
+        }
+
+        function renderByFeature() {
+            const treeDiv = document.getElementById('tree');
+            treeDiv.innerHTML = '';
+
+            const featureGroups = {};
+
+            workflowsData.forEach(workflow => {
+                const feature = extractFeatureFromWorkflow(workflow.name);
+                if (!featureGroups[feature]) {
+                    featureGroups[feature] = [];
+                }
+                featureGroups[feature].push({
+                    label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                    icon: extractIcon(workflow.name),
+                    workflow: workflow,
+                    url: workflow.html_url,
+                    run: workflow.recentRuns[0] || null
+                });
+            });
+
+            const treeData = Object.keys(featureGroups).map(feature => ({
+                label: feature,
+                icon: getFeatureIcon(feature),
+                children: featureGroups[feature]
+            })).sort((a, b) => a.label.localeCompare(b.label));
+
+            treeData.forEach(node => {
+                treeDiv.appendChild(createTreeNode(node, 0));
+            });
+        }
 
         function renderTreeByPR() {
             const treeDiv = document.getElementById('tree');
