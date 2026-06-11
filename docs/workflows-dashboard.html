@@ -348,17 +348,24 @@
                     headers['Authorization'] = `token ${token}`;
                 }
 
-                // Fetch PRs first
-                const prsResponse = await fetch(
-                    `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=20`,
-                    { headers: headers }
-                );
+                // Fetch PRs first (optional - if fails, continue without PRs)
+                let prsResponse;
+                try {
+                    prsResponse = await fetch(
+                        `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=20`,
+                        { headers: headers }
+                    );
 
-                if (!prsResponse.ok) {
-                    throw new Error(`GitHub API error fetching PRs: ${prsResponse.status}`);
+                    if (prsResponse.ok) {
+                        prsData = await prsResponse.json();
+                    } else {
+                        console.warn('Failed to fetch PRs, continuing without PR data');
+                        prsData = [];
+                    }
+                } catch (e) {
+                    console.warn('Error fetching PRs, continuing without PR data:', e);
+                    prsData = [];
                 }
-
-                prsData = await prsResponse.json();
 
                 // Fetch workflows
                 const workflowsResponse = await fetch(
@@ -393,6 +400,18 @@
                 treeDiv.style.display = 'block';
                 statsDiv.style.display = 'grid';
 
+                // Show warning if PR data is not available
+                if (!prsData || prsData.length === 0) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.style.background = '#fff3cd';
+                    warningDiv.style.color = '#856404';
+                    warningDiv.style.padding = '12px';
+                    warningDiv.style.borderRadius = '6px';
+                    warningDiv.style.marginBottom = '20px';
+                    warningDiv.textContent = '⚠️ PR data not available (authentication required). Showing workflows in flat view.';
+                    treeDiv.insertBefore(warningDiv, treeDiv.firstChild);
+                }
+
             } catch (error) {
                 errorDiv.textContent = error.message;
                 errorDiv.style.display = 'block';
@@ -425,6 +444,13 @@
 
         function renderTreeByFilter() {
             const filter = document.getElementById('view-filter').value;
+
+            // If PR data is not available and filter is 'pr', default to 'flat'
+            if (filter === 'pr' && (!prsData || prsData.length === 0)) {
+                document.getElementById('view-filter').value = 'flat';
+                renderFlatWorkflows();
+                return;
+            }
 
             switch (filter) {
                 case 'flat':
