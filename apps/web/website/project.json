@@ -1,0 +1,30 @@
+{
+  "name": "web-website",
+  "root": "apps/web/website",
+  "sourceRoot": "apps/web/website/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-website:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/website",
+        "index": "apps/web/website/src/index.html",
+        "main": "apps/web/website/src/main.tsx",
+        "tsConfig": "apps/web/website/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-website yet.'"
+      }
+    }
+  }
+}

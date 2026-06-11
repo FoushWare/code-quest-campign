@@ -1,0 +1,28 @@
+{
+  "name": "leaderboard-service",
+  "root": "services/leaderboard",
+  "projectType": "application",
+  "targets": {
+    "start": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go run ./cmd/main.go" }],
+        "cwd": "services/leaderboard"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go build -o ../../dist/services/leaderboard ./cmd/main.go" }],
+        "cwd": "services/leaderboard"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go test ./..." }],
+        "cwd": "services/leaderboard"
+      }
+    }
+  }
+}

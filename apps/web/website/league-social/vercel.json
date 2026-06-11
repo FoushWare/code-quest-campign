@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build:web-website-league-social",
+  "outputDirectory": "dist/apps/web-website-league-social",
+  "framework": null,
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

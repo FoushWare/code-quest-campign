@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build:web-website-profile-settings",
+  "outputDirectory": "dist/apps/web-website-profile-settings",
+  "framework": null,
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

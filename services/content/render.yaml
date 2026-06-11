@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: code-quest-content
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: 8082
+      - key: SERVICE_MODE
+        value: db

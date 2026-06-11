@@ -1,0 +1,29 @@
+name: [Backend CI] 🎮 gamification
+
+on:
+  pull_request:
+    paths:
+      - 'services/gamification/**'
+      - '.github/workflows/ci-gamification.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/gamification/**'
+      - '.github/workflows/ci-gamification.yml'
+
+jobs:
+  test:
+    name: Gamification Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run gamification service tests
+        run: cd services/gamification && go test ./...

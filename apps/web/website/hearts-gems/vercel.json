@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build:web-website-hearts-gems",
+  "outputDirectory": "dist/apps/web-website-hearts-gems",
+  "framework": null,
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

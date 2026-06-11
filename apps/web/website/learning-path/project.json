@@ -1,0 +1,30 @@
+{
+  "name": "web-website-learning-path",
+  "root": "apps/web/website/learning-path",
+  "sourceRoot": "apps/web/website/learning-path/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-website-learning-path:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/website/learning-path",
+        "index": "apps/web/website/learning-path/src/index.html",
+        "main": "apps/web/website/learning-path/src/main.tsx",
+        "tsConfig": "apps/web/website/learning-path/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-website-learning-path yet.'"
+      }
+    }
+  }
+}

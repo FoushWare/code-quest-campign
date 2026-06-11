@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build:web-website-lessons",
+  "outputDirectory": "dist/apps/web-website-lessons",
+  "framework": null,
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}

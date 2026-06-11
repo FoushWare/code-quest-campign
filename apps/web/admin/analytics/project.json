@@ -1,0 +1,30 @@
+{
+  "name": "web-admin-analytics",
+  "root": "apps/web/admin/analytics",
+  "sourceRoot": "apps/web/admin/analytics/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-admin-analytics:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/admin/analytics",
+        "index": "apps/web/admin/analytics/src/index.html",
+        "main": "apps/web/admin/analytics/src/main.tsx",
+        "tsConfig": "apps/web/admin/analytics/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-admin-analytics yet.'"
+      }
+    }
+  }
+}

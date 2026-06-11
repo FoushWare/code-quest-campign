@@ -1,0 +1,29 @@
+name: [Backend CI] 📝 content
+
+on:
+  pull_request:
+    paths:
+      - 'services/content/**'
+      - '.github/workflows/ci-content.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/content/**'
+      - '.github/workflows/ci-content.yml'
+
+jobs:
+  test:
+    name: Content Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run content service tests
+        run: cd services/content && go test ./...

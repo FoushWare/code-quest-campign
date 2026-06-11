@@ -1,0 +1,25 @@
+name: [Backend Deploy] 🚀 auth
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/auth/**'
+      - '.github/workflows/deploy-render-auth.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Auth Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Render
+        uses: render-inc/render-deploy-action@v1.0.0
+        with:
+          service-id: srv-d8iualojo6nc73do18j0
+          render-api-key: ${{ secrets.RENDER_API_KEY }}
+          wait-for-success: true

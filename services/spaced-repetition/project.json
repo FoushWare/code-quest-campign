@@ -1,0 +1,28 @@
+{
+  "name": "spaced-repetition-service",
+  "root": "services/spaced-repetition",
+  "projectType": "application",
+  "targets": {
+    "start": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go run ./cmd/main.go" }],
+        "cwd": "services/spaced-repetition"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go build -o ../../dist/services/spaced-repetition ./cmd/main.go" }],
+        "cwd": "services/spaced-repetition"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [{ "command": "go test ./..." }],
+        "cwd": "services/spaced-repetition"
+      }
+    }
+  }
+}

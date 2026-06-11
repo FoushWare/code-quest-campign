@@ -1,0 +1,30 @@
+{
+  "name": "web-admin-users",
+  "root": "apps/web/admin/users",
+  "sourceRoot": "apps/web/admin/users/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "@nrwl/web:dev-server",
+      "options": {
+        "buildTarget": "web-admin-users:build"
+      }
+    },
+    "build": {
+      "executor": "@nrwl/web:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web/admin/users",
+        "index": "apps/web/admin/users/src/index.html",
+        "main": "apps/web/admin/users/src/main.tsx",
+        "tsConfig": "apps/web/admin/users/tsconfig.app.json"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "echo 'No tests defined for web-admin-users yet.'"
+      }
+    }
+  }
+}

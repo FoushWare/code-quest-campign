@@ -5,6 +5,20 @@
 
 ---
 
+## Workspace Scaffold
+
+The current repo now follows the intended monorepo shape:
+
+- `apps/web/shell`: existing web shell host
+- `apps/web/website`: learner-facing website microfrontend
+- `apps/web/admin`: Next.js admin micro-frontend stub
+- `apps/mobile`: Expo mobile micro-frontend stub
+- `packages/*`: shared UI, API, type, config, and validation packages
+- `services/*`: Go microservice stubs for auth, content, spaced repetition, gamification, and leaderboard
+- `tools/*`: reserved for scripts and generators
+
+---
+
 # 📦 MODULE 1: COMPLETE DUOLINGO-PARITY FEATURE MAP
 
 Every feature below is decomposed into **Frontend (FE)**, **Backend (BE)**, and **Database (DB)** tasks, assigned as if distributing work across a team.

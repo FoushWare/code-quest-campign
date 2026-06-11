@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: code-quest-auth
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./services/auth
+    envVars:
+      - key: PORT
+        value: 8081
+      - key: SERVICE_MODE
+        value: db

@@ -1,6 +1,7 @@
 {
   "name": "web-shell",
   "root": "apps/web/shell",
+  "sourceRoot": "apps/web/shell/src",
   "projectType": "application",
   "targets": {
     "serve": {
@@ -10,7 +11,7 @@
       }
     },
     "build": {
-      "executor": "@nrwl/web:build",
+      "executor": "@nrwl/web:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/web/shell",

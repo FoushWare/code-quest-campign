@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npm run build:web-admin-moderation",
+  "outputDirectory": "dist/apps/web-admin-moderation",
+  "framework": null,
+  "env": {
+    "CODE_QUEST_ENV": "production"
+  }
+}
