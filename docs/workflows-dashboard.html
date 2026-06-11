@@ -359,6 +359,38 @@
                         );
                         const runsData = await runsResponse.json();
                         workflow.recentRuns = runsData.workflow_runs || [];
+
+                        // Fetch jobs for the most recent run to get failure details
+                        if (workflow.recentRuns.length > 0) {
+                            try {
+                                const jobsResponse = await fetch(
+                                    `https://api.github.com/repos/${owner}/${repo}/actions/runs/${workflow.recentRuns[0].id}/jobs`
+                                );
+                                const jobsData = await jobsResponse.json();
+                                workflow.recentRuns[0].jobs = jobsData.jobs || [];
+
+                                // Fetch logs for failed jobs to get failure reasons
+                                for (const job of workflow.recentRuns[0].jobs) {
+                                    if (job.conclusion === 'failure') {
+                                        try {
+                                            const logsResponse = await fetch(
+                                                `https://api.github.com/repos/${owner}/${repo}/actions/jobs/${job.id}/logs`
+                                            );
+                                            if (logsResponse.ok) {
+                                                const logsText = await logsResponse.text();
+                                                // Extract last few lines of logs for failure reason
+                                                const lines = logsText.split('\n').filter(l => l.trim());
+                                                job.failureReason = lines.slice(-5).join('\n') || 'Unknown failure';
+                                            }
+                                        } catch (e) {
+                                            job.failureReason = 'Could not fetch logs';
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                workflow.recentRuns[0].jobs = [];
+                            }
+                        }
                     } catch (e) {
                         workflow.recentRuns = [];
                     }
@@ -756,6 +788,55 @@
                 link.target = '_blank';
                 link.textContent = node.run ? 'View Run →' : 'View Workflow →';
                 contentDiv.appendChild(link);
+            }
+
+            // Add job details if this is a workflow node with a run
+            if (node.workflow && node.run && node.run.jobs && node.run.jobs.length > 0) {
+                const jobsDiv = document.createElement('div');
+                jobsDiv.className = 'job-details';
+                jobsDiv.style.marginTop = '8px';
+                jobsDiv.style.padding = '8px';
+                jobsDiv.style.background = '#f8f9fa';
+                jobsDiv.style.borderRadius = '4px';
+                jobsDiv.style.fontSize = '12px';
+
+                node.run.jobs.forEach(job => {
+                    const jobDiv = document.createElement('div');
+                    jobDiv.style.marginBottom = '6px';
+                    jobDiv.style.padding = '6px';
+                    jobDiv.style.background = '#fff';
+                    jobDiv.style.borderRadius = '4px';
+                    jobDiv.style.border = '1px solid #e0e0e0';
+
+                    const jobStatus = job.conclusion || job.status;
+                    const jobStatusColor = jobStatus === 'success' ? '#28a745' : jobStatus === 'failure' ? '#dc3545' : '#6c757d';
+
+                    let jobDetails = `
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="color: ${jobStatusColor}; font-weight: bold;">${jobStatus.toUpperCase()}</span>
+                            <span style="flex: 1; font-weight: 500;">${job.name}</span>
+                        </div>
+                    `;
+
+                    if (job.conclusion === 'failure' && job.failureReason) {
+                        jobDetails += `
+                            <div style="margin-top: 4px; padding: 4px; background: #ffe6e6; border-radius: 3px; color: #dc3545; font-size: 11px; white-space: pre-wrap;">
+                                <strong>Failure:</strong> ${job.failureReason}
+                            </div>
+                        `;
+                    } else if (job.conclusion === 'success') {
+                        jobDetails += `
+                            <div style="margin-top: 4px; color: #28a745; font-size: 11px;">
+                                ✓ Completed successfully
+                            </div>
+                        `;
+                    }
+
+                    jobDiv.innerHTML = jobDetails;
+                    jobsDiv.appendChild(jobDiv);
+                });
+
+                nodeDiv.appendChild(jobsDiv);
             }
 
             contentDiv.onclick = (e) => {
