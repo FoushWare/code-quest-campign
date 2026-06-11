@@ -288,19 +288,19 @@
             <div class="stats" id="stats" style="display: none;">
                 <div class="stat-card">
                     <h3 id="total-workflows">0</h3>
-                    <p>Total Workflows</p>
+                    <p>Open PRs</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="frontend-count">0</h3>
-                    <p>Frontend</p>
+                    <p>Frontend Workflows</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="backend-count">0</h3>
-                    <p>Backend</p>
+                    <p>Backend Workflows</p>
                 </div>
                 <div class="stat-card">
                     <h3 id="success-count">0</h3>
-                    <p>Successful</p>
+                    <p>Total Workflows</p>
                 </div>
             </div>
 
@@ -310,6 +310,7 @@
 
     <script>
         let workflowsData = [];
+        let prsData = [];
 
         async function loadWorkflows() {
             // Auto-detect repo from URL
@@ -333,32 +334,46 @@
                     headers['Authorization'] = `token ${token}`;
                 }
 
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows`, {
-                    headers: headers
-                });
+                // Fetch PRs first
+                const prsResponse = await fetch(
+                    `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&per_page=20`,
+                    { headers: headers }
+                );
 
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.status}`);
+                if (!prsResponse.ok) {
+                    throw new Error(`GitHub API error fetching PRs: ${prsResponse.status}`);
                 }
 
-                const data = await response.json();
+                prsData = await prsResponse.json();
+
+                // Fetch workflows
+                const workflowsResponse = await fetch(
+                    `https://api.github.com/repos/${owner}/${repo}/actions/workflows`,
+                    { headers: headers }
+                );
+
+                if (!workflowsResponse.ok) {
+                    throw new Error(`GitHub API error fetching workflows: ${workflowsResponse.status}`);
+                }
+
+                const data = await workflowsResponse.json();
                 workflowsData = data.workflows || [];
 
                 // Get recent runs for each workflow
                 for (const workflow of workflowsData) {
                     try {
                         const runsResponse = await fetch(
-                            `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow.id}/runs?per_page=1`,
+                            `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow.id}/runs?per_page=5`,
                             { headers: headers }
                         );
                         const runsData = await runsResponse.json();
-                        workflow.recentRun = runsData.workflow_runs?.[0] || null;
+                        workflow.recentRuns = runsData.workflow_runs || [];
                     } catch (e) {
-                        workflow.recentRun = null;
+                        workflow.recentRuns = [];
                     }
                 }
 
-                renderTree();
+                renderTreeByPR();
                 updateStats();
                 loadingDiv.style.display = 'none';
                 treeDiv.style.display = 'block';
@@ -388,106 +403,139 @@
             }
         };
 
-        function renderTree() {
+        function renderTreeByPR() {
             const treeDiv = document.getElementById('tree');
             treeDiv.innerHTML = '';
 
-            // Group workflows by feature/service
-            const features = {};
+            // Group workflows by PR
+            const prGroups = {};
 
-            workflowsData.forEach(workflow => {
-                const name = workflow.name.toLowerCase();
-                let feature = 'Other';
-
-                // Extract feature from workflow name
-                if (name.includes('auth')) {
-                    feature = 'Auth';
-                } else if (name.includes('content')) {
-                    feature = 'Content';
-                } else if (name.includes('gamification')) {
-                    feature = 'Gamification';
-                } else if (name.includes('leaderboard')) {
-                    feature = 'Leaderboard';
-                } else if (name.includes('spaced-repetition') || name.includes('spaced repetition')) {
-                    feature = 'Spaced Repetition';
-                } else if (name.includes('shell')) {
-                    feature = 'Shell';
-                } else if (name.includes('website')) {
-                    feature = 'Website';
-                } else if (name.includes('admin')) {
-                    feature = 'Admin';
-                } else if (name.includes('learning-path')) {
-                    feature = 'Learning Path';
-                } else if (name.includes('lessons')) {
-                    feature = 'Lessons';
-                } else if (name.includes('hearts-gems')) {
-                    feature = 'Hearts & Gems';
-                } else if (name.includes('league-social')) {
-                    feature = 'League Social';
-                } else if (name.includes('profile-settings')) {
-                    feature = 'Profile Settings';
-                } else if (name.includes('users')) {
-                    feature = 'Users';
-                } else if (name.includes('moderation')) {
-                    feature = 'Moderation';
-                } else if (name.includes('analytics')) {
-                    feature = 'Analytics';
-                } else if (name.includes('content-editor')) {
-                    feature = 'Content Editor';
-                }
-
-                if (!features[feature]) {
-                    features[feature] = [];
-                }
-                features[feature].push(workflow);
+            // Initialize with all PRs
+            prsData.forEach(pr => {
+                prGroups[pr.number] = {
+                    pr: pr,
+                    features: {}
+                };
             });
 
-            // Create tree structure grouped by feature with MFA/MSA
-            const treeData = Object.keys(features).map(feature => {
-                const workflows = features[feature];
-                const mfaWorkflows = workflows.filter(w => w.name.includes('Vercel') || w.name.includes('Frontend'));
-                const msaWorkflows = workflows.filter(w => w.name.includes('CI') || w.name.includes('Deploy'));
+            // Add workflows to PR groups based on recent runs
+            workflowsData.forEach(workflow => {
+                workflow.recentRuns.forEach(run => {
+                    const prNumber = extractPRNumberFromRun(run);
+                    if (prNumber && prGroups[prNumber]) {
+                        const feature = extractFeatureFromWorkflow(workflow.name);
+                        const type = extractTypeFromWorkflow(workflow.name);
+
+                        if (!prGroups[prNumber].features[feature]) {
+                            prGroups[prNumber].features[feature] = {
+                                frontend: [],
+                                backend: []
+                            };
+                        }
+
+                        if (type === 'frontend') {
+                            prGroups[prNumber].features[feature].frontend.push({
+                                label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                                icon: extractIcon(workflow.name),
+                                workflow: workflow,
+                                url: workflow.html_url,
+                                run: run
+                            });
+                        } else if (type === 'backend') {
+                            prGroups[prNumber].features[feature].backend.push({
+                                label: workflow.name.replace(/\[.*?\]\s*/, '').trim(),
+                                icon: extractIcon(workflow.name),
+                                workflow: workflow,
+                                url: workflow.html_url,
+                                run: run
+                            });
+                        }
+                    }
+                });
+            });
+
+            // Create tree structure grouped by PR
+            const treeData = Object.keys(prGroups).map(prNumber => {
+                const group = prGroups[prNumber];
+                const pr = group.pr;
+                const features = group.features;
 
                 const children = [];
 
-                if (mfaWorkflows.length > 0) {
-                    children.push({
-                        label: 'MFA',
-                        icon: '🎨',
-                        children: mfaWorkflows.map(w => ({
-                            label: w.name.replace(/\[.*?\]\s*/, '').trim(),
-                            icon: extractIcon(w.name),
-                            workflow: w,
-                            url: w.html_url,
-                            type: 'MFA'
-                        }))
-                    });
-                }
+                Object.keys(features).forEach(feature => {
+                    const featureData = features[feature];
+                    const featureChildren = [];
 
-                if (msaWorkflows.length > 0) {
-                    children.push({
-                        label: 'MSA',
-                        icon: '⚙️',
-                        children: msaWorkflows.map(w => ({
-                            label: w.name.replace(/\[.*?\]\s*/, '').trim(),
-                            icon: extractIcon(w.name),
-                            workflow: w,
-                            url: w.html_url,
-                            type: 'MSA'
-                        }))
-                    });
-                }
+                    if (featureData.frontend.length > 0) {
+                        featureChildren.push({
+                            label: 'Frontend',
+                            icon: '🎨',
+                            children: featureData.frontend
+                        });
+                    }
+
+                    if (featureData.backend.length > 0) {
+                        featureChildren.push({
+                            label: 'Backend',
+                            icon: '⚙️',
+                            children: featureData.backend
+                        });
+                    }
+
+                    if (featureChildren.length > 0) {
+                        children.push({
+                            label: feature,
+                            icon: getFeatureIcon(feature),
+                            children: featureChildren
+                        });
+                    }
+                });
 
                 return {
-                    label: feature,
-                    icon: getFeatureIcon(feature),
-                    children: children
+                    label: `PR #${prNumber}: ${pr.title.substring(0, 50)}${pr.title.length > 50 ? '...' : ''}`,
+                    icon: '🔀',
+                    url: pr.html_url,
+                    children: children.length > 0 ? children : [{ label: 'No workflows triggered', icon: '📋', children: [] }]
                 };
-            }).sort((a, b) => a.label.localeCompare(b.label));
+            }).sort((a, b) => b.label.localeCompare(a.label)); // Sort by PR number descending
 
             treeData.forEach(node => {
                 treeDiv.appendChild(createTreeNode(node, 0));
             });
+        }
+
+        function extractPRNumberFromRun(run) {
+            const headBranch = run.head_branch;
+            const prMatch = headBranch?.match(/(\d+)/);
+            return prMatch ? parseInt(prMatch[1]) : null;
+        }
+
+        function extractFeatureFromWorkflow(name) {
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes('auth')) return 'Auth';
+            if (lowerName.includes('content')) return 'Content';
+            if (lowerName.includes('gamification')) return 'Gamification';
+            if (lowerName.includes('leaderboard')) return 'Leaderboard';
+            if (lowerName.includes('spaced-repetition') || lowerName.includes('spaced repetition')) return 'Spaced Repetition';
+            if (lowerName.includes('shell')) return 'Shell';
+            if (lowerName.includes('website')) return 'Website';
+            if (lowerName.includes('admin')) return 'Admin';
+            if (lowerName.includes('learning-path')) return 'Learning Path';
+            if (lowerName.includes('lessons')) return 'Lessons';
+            if (lowerName.includes('hearts-gems')) return 'Hearts & Gems';
+            if (lowerName.includes('league-social')) return 'League Social';
+            if (lowerName.includes('profile-settings')) return 'Profile Settings';
+            if (lowerName.includes('users')) return 'Users';
+            if (lowerName.includes('moderation')) return 'Moderation';
+            if (lowerName.includes('analytics')) return 'Analytics';
+            if (lowerName.includes('content-editor')) return 'Content Editor';
+            return 'Other';
+        }
+
+        function extractTypeFromWorkflow(name) {
+            if (name.includes('Vercel') || name.includes('Frontend')) return 'frontend';
+            if (name.includes('CI') || name.includes('Deploy')) return 'backend';
+            return 'other';
         }
 
         function getFeatureIcon(feature) {
@@ -514,18 +562,6 @@
             return icons[feature] || '📋';
         }
 
-        function getWorkflowType(name) {
-            if (name.includes('CI')) return 'CI';
-            if (name.includes('Deploy') || name.includes('Vercel')) return 'Deploy';
-            return 'Other';
-        }
-
-        function extractPRNumber(workflow) {
-            if (!workflow.recentRun) return null;
-            const headBranch = workflow.recentRun.head_branch;
-            const prMatch = headBranch?.match(/(\d+)/);
-            return prMatch ? prMatch[1] : null;
-        }
 
         function extractIcon(name) {
             const iconMatch = name.match(/([\p{Emoji}])/u);
@@ -559,27 +595,18 @@
             contentDiv.appendChild(nodeIcon);
             contentDiv.appendChild(label);
 
+            // Add PR link if this is a PR node
+            if (node.url && !node.workflow) {
+                const link = document.createElement('a');
+                link.className = 'workflow-link';
+                link.href = node.url;
+                link.target = '_blank';
+                link.textContent = 'View PR →';
+                contentDiv.appendChild(link);
+            }
+
             if (node.workflow) {
-                const type = node.type || 'Other';
-                const typeSpan = document.createElement('span');
-                typeSpan.className = 'node-status';
-                typeSpan.style.background = type === 'MFA' ? '#e7f3ff' : type === 'MSA' ? '#fff3cd' : '#e2e3e5';
-                typeSpan.style.color = type === 'MFA' ? '#0066cc' : type === 'MSA' ? '#856404' : '#383d41';
-                typeSpan.textContent = type.toUpperCase();
-                contentDiv.appendChild(typeSpan);
-
-                // Extract PR number from recent run
-                const prNumber = extractPRNumber(node.workflow);
-                if (prNumber) {
-                    const prSpan = document.createElement('span');
-                    prSpan.className = 'node-status';
-                    prSpan.style.background = '#d4edda';
-                    prSpan.style.color = '#155724';
-                    prSpan.textContent = `PR #${prNumber}`;
-                    contentDiv.appendChild(prSpan);
-                }
-
-                const status = getStatus(node.workflow);
+                const status = getRunStatus(node.run);
                 const statusSpan = document.createElement('span');
                 statusSpan.className = `node-status status-${status}`;
                 statusSpan.textContent = status.toUpperCase();
@@ -587,9 +614,9 @@
 
                 const link = document.createElement('a');
                 link.className = 'workflow-link';
-                link.href = node.url;
+                link.href = node.run?.html_url || node.url;
                 link.target = '_blank';
-                link.textContent = 'View →';
+                link.textContent = 'View Run →';
                 contentDiv.appendChild(link);
             }
 
@@ -617,25 +644,27 @@
             return nodeDiv;
         }
 
-        function getStatus(workflow) {
-            if (!workflow.recentRun) return 'unknown';
-            const conclusion = workflow.recentRun.conclusion;
+        function getRunStatus(run) {
+            if (!run) return 'unknown';
+            const conclusion = run.conclusion;
+            const status = run.status;
+            if (status === 'in_progress' || status === 'queued') return 'pending';
             if (conclusion === 'success') return 'success';
             if (conclusion === 'failure') return 'failed';
-            if (conclusion === 'pending' || conclusion === 'in_progress') return 'pending';
+            if (conclusion === 'cancelled') return 'cancelled';
             return 'unknown';
         }
 
         function updateStats() {
-            const total = workflowsData.length;
-            const frontend = workflowsData.filter(w => w.name.startsWith('[Frontend]')).length;
-            const backend = workflowsData.filter(w => w.name.startsWith('[Backend')).length;
-            const success = workflowsData.filter(w => getStatus(w) === 'success').length;
+            const totalPRs = prsData.length;
+            const totalWorkflows = workflowsData.length;
+            const frontend = workflowsData.filter(w => w.name.includes('Vercel') || w.name.includes('Frontend')).length;
+            const backend = workflowsData.filter(w => w.name.includes('CI') || w.name.includes('Deploy')).length;
 
-            document.getElementById('total-workflows').textContent = total;
+            document.getElementById('total-workflows').textContent = totalPRs;
             document.getElementById('frontend-count').textContent = frontend;
             document.getElementById('backend-count').textContent = backend;
-            document.getElementById('success-count').textContent = success;
+            document.getElementById('success-count').textContent = totalWorkflows;
         }
 
         // Auto-load on page load if token is stored
