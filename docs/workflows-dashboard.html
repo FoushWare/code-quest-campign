@@ -312,8 +312,10 @@
         let workflowsData = [];
 
         async function loadWorkflows() {
-            const owner = document.getElementById('owner').value;
-            const repo = document.getElementById('repo').value;
+            // Auto-detect repo from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let owner = urlParams.get('owner') || document.getElementById('owner').value;
+            let repo = urlParams.get('repo') || document.getElementById('repo').value;
             const token = document.getElementById('token').value;
             const errorDiv = document.getElementById('error');
             const loadingDiv = document.getElementById('loading');
@@ -369,6 +371,23 @@
             }
         }
 
+        // Auto-load from URL parameters on page load
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const owner = urlParams.get('owner');
+            const repo = urlParams.get('repo');
+            const savedToken = localStorage.getItem('github-token');
+
+            if (owner) document.getElementById('owner').value = owner;
+            if (repo) document.getElementById('repo').value = repo;
+            if (savedToken) document.getElementById('token').value = savedToken;
+
+            // Auto-load if repo is provided
+            if (owner && repo) {
+                loadWorkflows();
+            }
+        };
+
         function renderTree() {
             const treeDiv = document.getElementById('tree');
             treeDiv.innerHTML = '';
@@ -423,18 +442,48 @@
                 features[feature].push(workflow);
             });
 
-            // Create tree structure grouped by feature
-            const treeData = Object.keys(features).map(feature => ({
-                label: feature,
-                icon: getFeatureIcon(feature),
-                children: features[feature].map(w => ({
-                    label: w.name.replace(/\[.*?\]\s*/, '').trim(),
-                    icon: extractIcon(w.name),
-                    workflow: w,
-                    url: w.html_url,
-                    type: getWorkflowType(w.name)
-                }))
-            })).sort((a, b) => a.label.localeCompare(b.label));
+            // Create tree structure grouped by feature with MFA/MSA
+            const treeData = Object.keys(features).map(feature => {
+                const workflows = features[feature];
+                const mfaWorkflows = workflows.filter(w => w.name.includes('Vercel') || w.name.includes('Frontend'));
+                const msaWorkflows = workflows.filter(w => w.name.includes('CI') || w.name.includes('Deploy'));
+
+                const children = [];
+
+                if (mfaWorkflows.length > 0) {
+                    children.push({
+                        label: 'MFA',
+                        icon: '🎨',
+                        children: mfaWorkflows.map(w => ({
+                            label: w.name.replace(/\[.*?\]\s*/, '').trim(),
+                            icon: extractIcon(w.name),
+                            workflow: w,
+                            url: w.html_url,
+                            type: 'MFA'
+                        }))
+                    });
+                }
+
+                if (msaWorkflows.length > 0) {
+                    children.push({
+                        label: 'MSA',
+                        icon: '⚙️',
+                        children: msaWorkflows.map(w => ({
+                            label: w.name.replace(/\[.*?\]\s*/, '').trim(),
+                            icon: extractIcon(w.name),
+                            workflow: w,
+                            url: w.html_url,
+                            type: 'MSA'
+                        }))
+                    });
+                }
+
+                return {
+                    label: feature,
+                    icon: getFeatureIcon(feature),
+                    children: children
+                };
+            }).sort((a, b) => a.label.localeCompare(b.label));
 
             treeData.forEach(node => {
                 treeDiv.appendChild(createTreeNode(node, 0));
@@ -469,6 +518,13 @@
             if (name.includes('CI')) return 'CI';
             if (name.includes('Deploy') || name.includes('Vercel')) return 'Deploy';
             return 'Other';
+        }
+
+        function extractPRNumber(workflow) {
+            if (!workflow.recentRun) return null;
+            const headBranch = workflow.recentRun.head_branch;
+            const prMatch = headBranch?.match(/(\d+)/);
+            return prMatch ? prMatch[1] : null;
         }
 
         function extractIcon(name) {
@@ -507,10 +563,21 @@
                 const type = node.type || 'Other';
                 const typeSpan = document.createElement('span');
                 typeSpan.className = 'node-status';
-                typeSpan.style.background = type === 'CI' ? '#e7f3ff' : type === 'Deploy' ? '#fff3cd' : '#e2e3e5';
-                typeSpan.style.color = type === 'CI' ? '#0066cc' : type === 'Deploy' ? '#856404' : '#383d41';
+                typeSpan.style.background = type === 'MFA' ? '#e7f3ff' : type === 'MSA' ? '#fff3cd' : '#e2e3e5';
+                typeSpan.style.color = type === 'MFA' ? '#0066cc' : type === 'MSA' ? '#856404' : '#383d41';
                 typeSpan.textContent = type.toUpperCase();
                 contentDiv.appendChild(typeSpan);
+
+                // Extract PR number from recent run
+                const prNumber = extractPRNumber(node.workflow);
+                if (prNumber) {
+                    const prSpan = document.createElement('span');
+                    prSpan.className = 'node-status';
+                    prSpan.style.background = '#d4edda';
+                    prSpan.style.color = '#155724';
+                    prSpan.textContent = `PR #${prNumber}`;
+                    contentDiv.appendChild(prSpan);
+                }
 
                 const status = getStatus(node.workflow);
                 const statusSpan = document.createElement('span');
